@@ -2916,6 +2916,15 @@ namespace GHelper.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Acrylic window blur.
+        /// </summary>
+        internal static string WindowBlur {
+            get {
+                return ResourceManager.GetString("WindowBlur", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Keep app window always on top.
         /// </summary>
         internal static string WindowTop {

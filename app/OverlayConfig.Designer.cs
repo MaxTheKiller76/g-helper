@@ -29,7 +29,7 @@ namespace GHelper
         /// </summary>
         private void InitializeComponent()
         {
-            panelToggles = new Panel();
+            panelToggles = new FluentCard();
             checkEnable = new GHelper.UI.RCheckBox();
             checkGameOnly = new GHelper.UI.RCheckBox();
             tableModes = new TableLayoutPanel();
@@ -49,7 +49,7 @@ namespace GHelper
             checkLabels = new GHelper.UI.RCheckBox();
             checkClocks = new GHelper.UI.RCheckBox();
             checkInline = new GHelper.UI.RCheckBox();
-            panelSliders = new Panel();
+            panelSliders = new FluentCard();
             labelSizeTitle = new Label();
             labelSize = new Label();
             trackScale = new RTrackBar();
@@ -60,7 +60,7 @@ namespace GHelper
             buttonCpuColor = new GHelper.UI.RColorButton();
             buttonGpuColor = new GHelper.UI.RColorButton();
             buttonReset = new GHelper.UI.RButton();
-            panelHotkeys = new Panel();
+            panelHotkeys = new FluentCard();
             labelHotkeys = new Label();
             panelToggles.SuspendLayout();
             tableModes.SuspendLayout();

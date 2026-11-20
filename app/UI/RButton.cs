@@ -1,189 +1,252 @@
-﻿using System.Drawing.Drawing2D;
+using System.Drawing.Drawing2D;
 
 namespace GHelper.UI
 {
     public class RButton : Button
     {
-
-        // Design tokens
-        private const float HoverShiftAmount = 0.04f;
-        private const float ActiveTopLighten = 0.15f;
-        private const float RestTopLighten = 0.1f;
-        private const int ActiveBgTopAlpha = 32;
-        private const float ActiveBgEndFraction = 0.20f;
-
-        //Fields
-        private int borderSize = 5;
-
-        private int borderRadius = 5;
-        public int BorderRadius
-        {
-            get { return borderRadius; }
-            set
-            {
-                borderRadius = value;
-            }
-        }
-
         private Color borderColor = Color.Transparent;
+        private bool activated;
+        private readonly FluentTransition selection;
+        private readonly FluentTransition hover;
+
+        public int BorderRadius { get; set; } = 8;
+        public bool Secondary { get; set; }
+        public bool Borderless { get; set; }
+
         public Color BorderColor
         {
-            get { return borderColor; }
+            get => borderColor;
             set
             {
+                if (borderColor == value) return;
                 borderColor = value;
+                UpdateInteractionColors();
+                Invalidate();
             }
         }
 
-
-        private bool activated = false;
         public bool Activated
         {
-            get { return activated; }
+            get => activated;
             set
             {
-                if (activated != value)
-                    Invalidate();
+                if (activated == value) return;
                 activated = value;
-                AccessibleDescription = activated ? "Active" : null;
+                AccessibleDescription = value ? "Active" : null;
+                if (Borderless) selection.SnapTo(value ? 1f : 0f);
+                else selection.AnimateTo(value ? 1f : 0f);
+                Invalidate();
             }
         }
 
-        private bool secondary = false;
-        public bool Secondary
+        private Color SelectionColor => FluentTheme.HighContrast || borderColor.A == 0 ? FluentTheme.Accent : borderColor;
+        private float SelectionProgress => Enabled && !FluentTheme.HighContrast && selection != null
+            ? selection.Value : activated ? 1f : 0f;
+
+        private Color SelectionFill
         {
-            get { return secondary; }
-            set
+            get
             {
-                secondary = value;
+                Color resting = base.BackColor;
+                float progress = SelectionProgress;
+                return progress > 0f && Enabled && !Borderless && !RForm.flatTheme && !FluentTheme.HighContrast
+                    ? FluentTheme.Blend(resting, SelectionColor, 0.17f * progress)
+                    : resting;
             }
         }
 
-        public bool Borderless { get; set; } = false;
+        public override Color BackColor
+        {
+            get
+            {
+                Color background = SelectionFill;
+                float amount = hover?.Value ?? 0f;
+                return amount > 0f && UsesHoverFill(background)
+                    ? FluentTheme.Blend(background, InteractionTint(background), 0.06f * amount)
+                    : background;
+            }
+            set => base.BackColor = value;
+        }
 
         protected override bool ShowFocusCues => false;
 
         public RButton()
         {
+            selection = new(this, onFrame: UpdateInteractionColors);
+            hover = new(this, onFrame: UpdateInteractionColors);
             DoubleBuffered = true;
             FlatStyle = FlatStyle.Flat;
             FlatAppearance.BorderSize = 0;
-            BackColorChanged += (s, e) => UpdateHoverColor();
-            UpdateHoverColor();
+            BackColorChanged += (_, _) => UpdateInteractionColors();
+            UpdateInteractionColors();
         }
 
-        private void UpdateHoverColor()
+        private void UpdateInteractionColors()
         {
-            int lum = (BackColor.R * 30 + BackColor.G * 59 + BackColor.B * 11) / 100;
-            Color target = lum > 128 ? Color.Black : Color.White;
-            FlatAppearance.MouseOverBackColor = Shift(BackColor, target, HoverShiftAmount);
-            FlatAppearance.MouseDownBackColor = Shift(BackColor, target, HoverShiftAmount * 2f);
+            Color background = SelectionFill;
+            Color tint = InteractionTint(background);
+            FlatAppearance.MouseOverBackColor = UsesHoverFill(background) ? BackColor : FluentTheme.Blend(background, tint, 0.06f);
+            FlatAppearance.MouseDownBackColor = FluentTheme.Blend(background, tint, 0.13f);
         }
 
-        private static Color Shift(Color from, Color target, float amount)
+        private bool UsesHoverFill(Color color) => Enabled && !FluentTheme.HighContrast && color.A == 255;
+
+        private static Color InteractionTint(Color color) => color.GetBrightness() > 0.5f ? Color.Black : Color.White;
+
+        protected override void OnMouseEnter(EventArgs e)
         {
-            return Color.FromArgb(from.A,
-                (int)(from.R + (target.R - from.R) * amount),
-                (int)(from.G + (target.G - from.G) * amount),
-                (int)(from.B + (target.B - from.B) * amount));
+            base.OnMouseEnter(e);
+            if (UsesHoverFill(SelectionFill)) hover.AnimateTo(1f, FluentTransition.Quick);
         }
 
-        private GraphicsPath GetFigurePath(Rectangle rect, int radius)
+        protected override void OnMouseLeave(EventArgs e)
         {
-            GraphicsPath path = new GraphicsPath();
-            float curveSize = radius * 2F;
-
-            path.StartFigure();
-            path.AddArc(rect.X, rect.Y, curveSize, curveSize, 180, 90);
-            path.AddArc(rect.Right - curveSize, rect.Y, curveSize, curveSize, 270, 90);
-            path.AddArc(rect.Right - curveSize, rect.Bottom - curveSize, curveSize, curveSize, 0, 90);
-            path.AddArc(rect.X, rect.Bottom - curveSize, curveSize, curveSize, 90, 90);
-            path.CloseFigure();
-            return path;
+            base.OnMouseLeave(e);
+            hover.AnimateTo(0f, FluentTransition.Quick);
         }
 
-
-        protected override void OnPaint(PaintEventArgs pevent)
+        protected override void OnVisibleChanged(EventArgs e)
         {
+            base.OnVisibleChanged(e);
+            SettleVisuals();
+        }
 
-            base.OnPaint(pevent);
+        protected override void OnEnabledChanged(EventArgs e)
+        {
+            base.OnEnabledChanged(e);
+            if (!Enabled) SettleVisuals();
+            UpdateInteractionColors();
+        }
 
-            float ratio = pevent.Graphics.DpiX / 192.0f;
-            int border = (int)Math.Round((ratio * borderSize - 1) / 2) * 2 + 1;
-            int radius = (int)Math.Round(ratio * borderRadius, MidpointRounding.AwayFromZero);
+        private void SettleVisuals()
+        {
+            selection?.SnapTo(activated ? 1f : 0f);
+            hover?.SnapTo(0f);
+        }
 
-            Rectangle rectSurface = ClientRectangle;
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            if (Enabled || FluentTheme.HighContrast)
+                base.OnPaint(e);
+            else
+                PaintDisabledContent(e);
+            if (Parent is null || ClientSize.Width < 3 || ClientSize.Height < 3) return;
 
-            using (GraphicsPath pathSurface = GetFigurePath(rectSurface, radius + border))
-            using (Pen penSurface = new Pen(Parent.BackColor, border))
+            var bounds = new Rectangle(0, 0, ClientSize.Width - 1, ClientSize.Height - 1);
+            int radius = RForm.flatTheme || BorderRadius == 0 ? 0 : FluentTheme.Scale(this, 4);
+            var graphics = e.Graphics;
+            var state = graphics.Save();
+            graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            using var outline = RComboBox.RoundedRect(bounds, radius, radius);
+
+            if (radius > 0)
             {
-                pevent.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                Region = new Region(pathSurface);
-                pevent.Graphics.DrawPath(penSurface, pathSurface);
+                // Leave the native button rectangular for hit testing.
+                using var corners = new GraphicsPath(FillMode.Alternate);
+                corners.AddRectangle(ClientRectangle);
+                corners.AddPath(outline, false);
+                using var parentBrush = new SolidBrush(Parent.BackColor);
+                graphics.FillPath(parentBrush, corners);
+            }
 
-                bool drawActive = Enabled && !Borderless && activated && borderColor.A > 0;
-                bool drawRest = Enabled && !Borderless && !activated && FlatAppearance.BorderColor.A > 0 && !RForm.flatTheme;
+            float selectionProgress = SelectionProgress;
+            if (!Borderless && (!RForm.flatTheme || selectionProgress > 0f || FluentTheme.HighContrast))
+            {
+                Color stroke = Enabled ? FlatAppearance.BorderColor : FluentTheme.CardStroke;
+                if (stroke.A == 0) stroke = FluentTheme.Stroke;
+                if (selectionProgress > 0f && Enabled)
+                    stroke = FluentTheme.Blend(stroke, SelectionColor, 0.55f * selectionProgress);
+                using var pen = new Pen(stroke);
+                graphics.DrawPath(pen, outline);
+            }
 
-                if (drawActive)
+            if (selectionProgress > 0f && !Borderless && bounds.Height >= FluentTheme.Scale(this, 12))
+            {
+                float length = Math.Min(FluentTheme.Scale(this, 14), bounds.Height / 2) * (0.45f + 0.55f * selectionProgress);
+                float y = (bounds.Height - length) / 2f;
+                int x = RightToLeft == RightToLeft.Yes ? bounds.Right - FluentTheme.Scale(this, 3) : FluentTheme.Scale(this, 3);
+                Color color = Enabled ? SelectionColor : FluentTheme.DisabledText;
+                using var marker = new Pen(Color.FromArgb((int)(255 * selectionProgress), color), FluentTheme.Scale(this, 2))
+                    { StartCap = LineCap.Round, EndCap = LineCap.Round };
+                graphics.DrawLine(marker, x, y, x, y + length);
+            }
+
+            if (Focused && base.ShowFocusCues)
+            {
+                bounds.Inflate(-2, -2);
+                if (bounds.Width > 0 && bounds.Height > 0)
                 {
-                    Rectangle borderRect = new Rectangle(border, border, rectSurface.Width - 2 * border, rectSurface.Height - 2 * border);
+                    using var focus = new Pen(FluentTheme.Accent, FluentTheme.Scale(this, 2));
+                    RComboBox.DrawRoundedRectangle(graphics, focus, bounds, Math.Max(0, radius - 1), Math.Max(0, radius - 1));
+                }
+            }
 
-                    Color bgTop = Color.FromArgb(ActiveBgTopAlpha, borderColor);
-                    Color bgTransparent = Color.FromArgb(0, borderColor);
-                    float bgEndPos = ActiveBgEndFraction;
+            graphics.Restore(state);
+        }
 
-                    using (GraphicsPath bgPath = GetFigurePath(borderRect, radius))
-                    using (LinearGradientBrush bgBrush = new LinearGradientBrush(
-                        ControlHelper.DarkMode ? new PointF(0, borderRect.Y) : new PointF(0, borderRect.Bottom),
-                        ControlHelper.DarkMode ? new PointF(0, borderRect.Bottom) : new PointF(0, borderRect.Y),
-                        bgTop, bgTransparent))
+        private void PaintDisabledContent(PaintEventArgs e)
+        {
+            using var background = new SolidBrush(BackColor);
+            e.Graphics.FillRectangle(background, e.ClipRectangle);
+
+            int gap = FluentTheme.Scale(this, 4);
+            var content = Rectangle.FromLTRB(Padding.Left + gap, Padding.Top + 2,
+                ClientSize.Width - Padding.Right - gap, ClientSize.Height - Padding.Bottom - 2);
+            if (content.Width <= 0 || content.Height <= 0) return;
+
+            var label = content;
+            if (Image is Image image)
+            {
+                var icon = content;
+                if (!string.IsNullOrEmpty(Text))
+                {
+                    switch (TextImageRelation)
                     {
-                        bgBrush.InterpolationColors = new ColorBlend
-                        {
-                            Colors = new[] { bgTop, bgTransparent, bgTransparent },
-                            Positions = new[] { 0f, bgEndPos, 1f }
-                        };
-                        if (!RForm.flatTheme)
-                            pevent.Graphics.FillPath(bgBrush, bgPath);
+                        case TextImageRelation.ImageAboveText:
+                        case TextImageRelation.TextAboveImage:
+                            int height = Math.Min(image.Height, content.Height / 2);
+                            icon.Height = height;
+                            label.Height = Math.Max(0, content.Height - height - gap);
+                            if (TextImageRelation == TextImageRelation.ImageAboveText) label.Y = icon.Bottom + gap;
+                            else icon.Y = label.Bottom + gap;
+                            break;
+                        case TextImageRelation.ImageBeforeText:
+                        case TextImageRelation.TextBeforeImage:
+                            int width = Math.Min(image.Width, content.Width / 2);
+                            icon.Width = width;
+                            label.Width = Math.Max(0, content.Width - width - gap);
+                            bool imageFirst = (TextImageRelation == TextImageRelation.ImageBeforeText) != (RightToLeft == RightToLeft.Yes);
+                            if (imageFirst) label.X = icon.Right + gap;
+                            else icon.X = label.Right + gap;
+                            break;
                     }
+                }
 
-                    ControlHelper.DrawGradientBorder(pevent.Graphics, borderRect, borderColor, radius, border, PenAlignment.Outset, RForm.flatTheme ? 0f : ActiveTopLighten);
-                }
-                else if (drawRest)
-                {
-                    int inset = border / 2 + 1;
-                    Rectangle borderRect = new Rectangle(inset, inset, rectSurface.Width - 2 * inset, rectSurface.Height - 2 * inset);
-                    ControlHelper.DrawGradientBorder(pevent.Graphics, borderRect, FlatAppearance.BorderColor, radius + border - inset, 1f, PenAlignment.Inset, RestTopLighten);
-                }
+                var state = e.Graphics.Save();
+                e.Graphics.SetClip(icon, CombineMode.Intersect);
+                ControlPaint.DrawImageDisabled(e.Graphics, image, icon.X + (icon.Width - image.Width) / 2,
+                    icon.Y + (icon.Height - image.Height) / 2, BackColor);
+                e.Graphics.Restore(state);
             }
 
-            if (!Enabled && ForeColor != SystemColors.ControlText)
+            if (label.Width <= 0 || label.Height <= 0) return;
+            TextFormatFlags flags = TextFormatFlags.WordBreak | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding;
+            flags |= TextAlign switch
             {
-                var rect = pevent.ClipRectangle;
-                if (Image is not null)
-                {
-                    rect.Y += Image.Height;
-                    rect.Height -= Image.Height;
-                }
-                else
-                {
-                    using (var brush = new SolidBrush(Parent.BackColor))
-                        pevent.Graphics.FillRectangle(brush, rect);
-                    using (var brush = new SolidBrush(BackColor))
-                        pevent.Graphics.FillRectangle(brush, rect);
-                }
-                TextFormatFlags flags = TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.WordBreak;
-                TextRenderer.DrawText(pevent.Graphics, Text, Font, rect, Color.Gray, flags);
-            }
-
-            if (!Enabled && !Borderless && activated && borderColor.A > 0)
+                ContentAlignment.TopLeft or ContentAlignment.MiddleLeft or ContentAlignment.BottomLeft => TextFormatFlags.Left,
+                ContentAlignment.TopRight or ContentAlignment.MiddleRight or ContentAlignment.BottomRight => TextFormatFlags.Right,
+                _ => TextFormatFlags.HorizontalCenter
+            };
+            flags |= TextAlign switch
             {
-                Rectangle borderRect = new Rectangle(border, border, rectSurface.Width - 2 * border, rectSurface.Height - 2 * border);
-                ControlHelper.DrawGradientBorder(pevent.Graphics, borderRect, borderColor, radius, border, PenAlignment.Outset, RForm.flatTheme ? 0f : ActiveTopLighten);
-            }
-
-
+                ContentAlignment.TopLeft or ContentAlignment.TopCenter or ContentAlignment.TopRight => TextFormatFlags.Top,
+                ContentAlignment.BottomLeft or ContentAlignment.BottomCenter or ContentAlignment.BottomRight => TextFormatFlags.Bottom,
+                _ => TextFormatFlags.VerticalCenter
+            };
+            if (!UseMnemonic) flags |= TextFormatFlags.NoPrefix;
+            else if (!ShowKeyboardCues) flags |= TextFormatFlags.HidePrefix;
+            if (RightToLeft == RightToLeft.Yes) flags |= TextFormatFlags.RightToLeft;
+            TextRenderer.DrawText(e.Graphics, Text, Font, label, FluentTheme.DisabledText, flags);
         }
-
     }
 }

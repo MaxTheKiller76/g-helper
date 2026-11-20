@@ -145,6 +145,7 @@ namespace GHelper
         public Extra()
         {
             InitializeComponent();
+            InitializeWindowBlurToggle();
 
             labelBindings.Text = Properties.Strings.KeyBindings;
             buttonResetBindings.Text = Properties.Strings.Reset;
@@ -905,6 +906,27 @@ namespace GHelper
             ScreenControl.AutoScreen(true);
         }
 
+
+        private void InitializeWindowBlurToggle()
+        {
+            var toggle = new FluentToggle
+            {
+                Name = "toggleWindowBlur",
+                Text = Properties.Strings.WindowBlur,
+                Dock = DockStyle.Top,
+                Height = FluentTheme.Scale(this, 26),
+                Padding = new Padding(FluentTheme.Scale(this, 3), 0, 0, 0),
+                Checked = AcrylicBackdrop.IsRequested,
+                Enabled = AcrylicBackdrop.IsSupported,
+                UseVisualStyleBackColor = false
+            };
+            panelSettings.Controls.Add(toggle);
+            toggle.CheckedChanged += (_, _) =>
+            {
+                AppConfig.Set(AcrylicBackdrop.Preference, toggle.Checked ? 1 : 0);
+                Program.RefreshTheme();
+            };
+        }
 
         private void CheckTopmost_CheckedChanged(object? sender, EventArgs e)
         {

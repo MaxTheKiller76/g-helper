@@ -41,7 +41,7 @@ namespace GHelper
             pictureBindings = new PictureBox();
             pictureHelp = new PictureBox();
             labelBindings = new Label();
-            panelBindings = new Panel();
+            panelBindings = new FluentCard { BottomGap = 5 };
             tableBindings = new TableLayoutPanel();
             labelFNE = new Label();
             comboFNE = new RComboBox();
@@ -75,7 +75,7 @@ namespace GHelper
             sliderBrightness = new Slider();
             pictureBacklight = new PictureBox();
             labelBacklightTitle = new Label();
-            panelBacklight = new Panel();
+            panelBacklight = new FluentCard { BottomGap = 5 };
             panelBacklightExtra = new Panel();
             numericBacklightPluggedTime = new NumericUpDownWithUnit();
             numericBacklightTime = new NumericUpDownWithUnit();
@@ -111,7 +111,7 @@ namespace GHelper
             pictureLog = new PictureBox();
             pictureSettings = new PictureBox();
             labelSettings = new Label();
-            panelSettings = new Panel();
+            panelSettings = new FluentCard { BottomGap = 5 };
             checkAutoToggleClamshellMode = new CheckBox();
             checkTopmost = new CheckBox();
             checkNoOverdrive = new CheckBox();
@@ -305,7 +305,7 @@ namespace GHelper
             panelBindings.Dock = DockStyle.Top;
             panelBindings.Location = new Point(15, 66);
             panelBindings.Name = "panelBindings";
-            panelBindings.Padding = new Padding(0, 0, 11, 5);
+            panelBindings.Padding = new Padding(12, 8, 12, 18);
             panelBindings.Size = new Size(949, 395);
             panelBindings.TabIndex = 1;
             panelBindings.TabStop = true;
@@ -750,7 +750,7 @@ namespace GHelper
             panelBacklight.Dock = DockStyle.Top;
             panelBacklight.Location = new Point(15, 512);
             panelBacklight.Name = "panelBacklight";
-            panelBacklight.Padding = new Padding(0, 5, 0, 5);
+            panelBacklight.Padding = new Padding(12, 8, 12, 18);
             panelBacklight.Size = new Size(949, 444);
             panelBacklight.TabIndex = 3;
             // 
@@ -1233,7 +1233,7 @@ namespace GHelper
             panelSettings.Dock = DockStyle.Top;
             panelSettings.Location = new Point(15, 1252);
             panelSettings.Name = "panelSettings";
-            panelSettings.Padding = new Padding(21, 5, 11, 5);
+            panelSettings.Padding = new Padding(21, 8, 16, 18);
             panelSettings.Size = new Size(949, 514);
             panelSettings.TabIndex = 50;
             // 

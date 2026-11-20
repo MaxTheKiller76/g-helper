@@ -1,4 +1,4 @@
-﻿using GHelper.UI;
+using GHelper.UI;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
@@ -61,6 +61,14 @@ public static class ControlHelper
         foreach (Control control in controls)
         {
 
+            if (control is FluentCard card)
+                card.BackColor = FluentTheme.Card;
+            else if (control is Panel panel && panel.Name.Contains("Header"))
+                panel.BackColor = FluentTheme.Card;
+
+            if (control is FluentCaption)
+                control.ForeColor = FluentTheme.SecondaryText;
+
             AdjustControls(control.Controls);
 
             var button = control as RButton;
@@ -114,28 +122,25 @@ public static class ControlHelper
                 gb.ForeColor = RForm.foreMain;
             }
 
-            var pn = control as Panel;
-            if (pn != null && pn.Name.Contains("Header"))
-            {
-                pn.BackColor = RForm.buttonSecond;
-            }
-
             var sl = control as Slider;
             if (sl != null)
             {
                 sl.borderColor = RForm.buttonMain;
+                sl.accentColor = FluentTheme.Accent;
             }
 
             var chk = control as CheckBox;
             if (chk != null)
             {
-                if (chk.BackColor != RForm.formBack)
+                chk.ForeColor = RForm.foreMain;
+                chk.BackColor = chk.Appearance == Appearance.Button
+                    ? RForm.buttonSecond : chk.Parent?.BackColor ?? RForm.formBack;
+                if (chk is RCheckBox)
                 {
-                    chk.BackColor = RForm.buttonSecond;
-                    if (chk is RCheckBox)
-                        chk.FlatAppearance.BorderColor = RForm.borderSecond;
+                    chk.FlatAppearance.BorderColor = RForm.borderMain;
+                    chk.FlatAppearance.CheckedBackColor = FluentTheme.Blend(chk.BackColor, FluentTheme.Accent, 0.18f);
                 }
-                SetWindowTheme(chk.Handle, _darkMode ? "DarkMode_Explorer" : "Explorer", null);
+                SetWindowTheme(chk.Handle, _darkMode && !FluentTheme.HighContrast ? "DarkMode_Explorer" : "Explorer", null);
             }
 
             var chart = control as Chart;
@@ -192,49 +197,6 @@ public static class ControlHelper
             g.DrawImage(image, new Rectangle(new Point(), newSize));
         }
         return pic;
-    }
-
-    // Design tokens
-    private const float GradientHeightFraction = 0.3f;
-    private const float LightGradientHeightFraction = 0.9f;
-    private const int TopFadeAlpha = 64;
-
-    public static void DrawGradientBorder(Graphics g, Rectangle bounds, Color sideColor, int radius, float strokeWidth = 1f, PenAlignment alignment = PenAlignment.Center, float topLighten = 0.1f)
-    {
-        Color topColor = !_darkMode && strokeWidth <= 1f
-            ? Color.FromArgb(TopFadeAlpha, sideColor)
-            : Color.FromArgb(sideColor.A,
-                (int)(sideColor.R + (255 - sideColor.R) * topLighten),
-                (int)(sideColor.G + (255 - sideColor.G) * topLighten),
-                (int)(sideColor.B + (255 - sideColor.B) * topLighten));
-
-        float flatHeight = Math.Max(1f, strokeWidth);
-        float gradHeight = (float)Math.Round(bounds.Height * (_darkMode ? GradientHeightFraction : LightGradientHeightFraction));
-        float pad = strokeWidth;
-        float axisStart = bounds.Y - pad;
-        float axisEnd = bounds.Y + bounds.Height + pad;
-        float axisLen = axisEnd - axisStart;
-        float p1 = Math.Max(0f, Math.Min(0.98f, (pad + flatHeight) / axisLen));
-        float p2 = Math.Max(p1 + 0.01f, Math.Min(1f, (pad + flatHeight + gradHeight) / axisLen));
-
-        using (GraphicsPath path = RComboBox.RoundedRect(bounds, radius, radius))
-        using (LinearGradientBrush brush = new LinearGradientBrush(
-            new PointF(0, axisStart), new PointF(0, axisEnd),
-            topColor, sideColor))
-        {
-            brush.InterpolationColors = new ColorBlend(4)
-            {
-                Colors = new[] { topColor, topColor, sideColor, sideColor },
-                Positions = new[] { 0f, p1, p2, 1f }
-            };
-            using (Pen pen = new Pen(brush, strokeWidth) { Alignment = alignment })
-            {
-                SmoothingMode prev = g.SmoothingMode;
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                g.DrawPath(pen, path);
-                g.SmoothingMode = prev;
-            }
-        }
     }
 
     private static readonly ImageAttributes _invertAttributes = CreateInvertAttributes();

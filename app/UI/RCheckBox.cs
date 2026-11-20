@@ -20,13 +20,12 @@ namespace GHelper.UI
         {
             base.OnPaint(pevent);
 
-            if (Parent == null || FlatAppearance.BorderColor.A == 0 || RForm.flatTheme) return;
+            if (Parent is null || ClientSize.Width < 3 || ClientSize.Height < 3 || Appearance != Appearance.Button) return;
 
-            float ratio = pevent.Graphics.DpiX / 192.0f;
-            int radius = (int)Math.Round(ratio * borderRadius, MidpointRounding.AwayFromZero);
+            int radius = RForm.flatTheme || borderRadius == 0 ? 0 : FluentTheme.Scale(this, 4);
 
             Rectangle borderRect = new Rectangle(0, 0, ClientRectangle.Width - 1, ClientRectangle.Height - 1);
-            Color sideColor = FlatAppearance.BorderColor.A > 0 ? FlatAppearance.BorderColor : RForm.borderSecond;
+            Color sideColor = Checked && Enabled ? FluentTheme.Accent : FluentTheme.Stroke;
 
             pevent.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
@@ -40,7 +39,8 @@ namespace GHelper.UI
                 pevent.Graphics.FillPath(parentBrush, cutoutPath);
             }
 
-            ControlHelper.DrawGradientBorder(pevent.Graphics, borderRect, sideColor, radius, 1f, PenAlignment.Center);
+            using var outline = new Pen(sideColor);
+            RComboBox.DrawRoundedRectangle(pevent.Graphics, outline, borderRect, radius, radius);
         }
     }
 }

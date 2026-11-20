@@ -32,11 +32,8 @@ namespace GHelper.UI
         private const float InnerHover = 16f / 22f;
         private const float InnerPressed = 10f / 22f;
 
-        private float _innerScale = InnerNormal;
-        private float _innerTarget = InnerNormal;
-        private float _tickAlpha;
-        private float _tickTarget;
-        private readonly System.Windows.Forms.Timer _animTimer = new() { Interval = 30 };
+        private readonly FluentTransition _innerScale;
+        private readonly FluentTransition _tickAlpha;
 
 
         public Color accentColor = Color.FromArgb(255, 58, 174, 239);
@@ -51,26 +48,14 @@ namespace GHelper.UI
             // This reduces flicker
             DoubleBuffered = true;
             TabStop = true;
-
-            _animTimer.Tick += delegate
-            {
-                _innerScale += (_innerTarget - _innerScale) * 0.3f;
-                _tickAlpha += (_tickTarget - _tickAlpha) * 0.3f;
-                if (Math.Abs(_innerTarget - _innerScale) < 0.01f && Math.Abs(_tickTarget - _tickAlpha) < 1f)
-                {
-                    _innerScale = _innerTarget;
-                    _tickAlpha = _tickTarget;
-                    _animTimer.Stop();
-                }
-                Invalidate();
-            };
+            _innerScale = new(this, InnerNormal);
+            _tickAlpha = new(this);
         }
 
         private void AnimateInner(float target)
         {
-            _innerTarget = target;
-            _tickTarget = target == InnerNormal ? 0 : 120;
-            _animTimer.Start();
+            _innerScale.AnimateTo(target, FluentTransition.Quick);
+            _tickAlpha.AnimateTo(target == InnerNormal ? 0f : 120f);
         }
 
 
@@ -169,9 +154,10 @@ namespace GHelper.UI
         {
             base.OnPaint(e);
 
-            Brush brushAccent = new SolidBrush(accentColor);
-            Brush brushEmpty = new SolidBrush(RForm.chartGrid);
-            Brush brushBorder = new SolidBrush(borderColor);
+            Color fill = Enabled ? accentColor : FluentTheme.DisabledText;
+            using var brushAccent = new SolidBrush(fill);
+            using var brushEmpty = new SolidBrush(FluentTheme.Blend(BackColor, RForm.foreMain, 0.29f));
+            using var brushBorder = new SolidBrush(borderColor);
 
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
@@ -180,8 +166,7 @@ namespace GHelper.UI
                 float thumbY = _dragX ?? _thumbPos.Y;
                 e.Graphics.FillRectangle(brushEmpty, _barPos.X, _barPos.Y, _barSize.Width, _barSize.Height);
                 e.Graphics.FillRectangle(brushAccent, _barPos.X, thumbY, _barSize.Width, _barPos.Y + _barSize.Height - thumbY);
-                e.Graphics.FillCircle(brushBorder, _thumbPos.X, thumbY, _radius);
-                e.Graphics.FillCircle(brushAccent, _thumbPos.X, thumbY, _innerScale * _radius);
+                DrawThumb(e.Graphics, brushBorder, brushAccent, _thumbPos.X, thumbY);
                 return;
             }
 
@@ -192,9 +177,9 @@ namespace GHelper.UI
             e.Graphics.FillRectangle(brushAccent,
                 _barPos.X, _barPos.Y, thumbX - _barPos.X, _barSize.Height);
 
-            if (_tickAlpha >= 1 && supportedValues.Count > 0)
+            if (_tickAlpha.Value >= 1f && supportedValues.Count > 0)
             {
-                Brush brushMark = new SolidBrush(Color.FromArgb((int)_tickAlpha, RForm.foreMain));
+                using var brushMark = new SolidBrush(Color.FromArgb((int)_tickAlpha.Value, RForm.foreMain));
                 float tickW = Math.Max(1f, _barSize.Height / 4);
                 float tickH = 0.75f * _barSize.Height;
                 float gap = 0.5f * _barSize.Height;
@@ -206,8 +191,15 @@ namespace GHelper.UI
                 }
             }
 
-            e.Graphics.FillCircle(brushBorder, thumbX, _thumbPos.Y, _radius);
-            e.Graphics.FillCircle(brushAccent, thumbX, _thumbPos.Y, _innerScale * _radius);
+            DrawThumb(e.Graphics, brushBorder, brushAccent, thumbX, _thumbPos.Y);
+        }
+
+        private void DrawThumb(Graphics graphics, Brush surface, Brush accent, float x, float y)
+        {
+            graphics.FillCircle(surface, x, y, _radius);
+            graphics.FillCircle(accent, x, y, _innerScale.Value * _radius);
+            using var outline = new Pen(Focused && ShowFocusCues ? FluentTheme.Accent : FluentTheme.Stroke);
+            graphics.DrawCircle(outline, x, y, _radius);
         }
 
         protected override void OnResize(EventArgs e)
@@ -331,12 +323,23 @@ namespace GHelper.UI
             if (!_moving) AnimateInner(InnerNormal);
         }
 
-        protected override void Dispose(bool disposing)
+        protected override void OnVisibleChanged(EventArgs e)
         {
-            if (disposing) _animTimer.Dispose();
-            base.Dispose(disposing);
+            base.OnVisibleChanged(e);
+            ResetThumb();
         }
 
+        protected override void OnEnabledChanged(EventArgs e)
+        {
+            base.OnEnabledChanged(e);
+            if (!Enabled) ResetThumb();
+        }
+
+        private void ResetThumb()
+        {
+            _innerScale?.SnapTo(InnerNormal);
+            _tickAlpha?.SnapTo(0f);
+        }
     }
 
 }

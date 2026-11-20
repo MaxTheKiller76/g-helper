@@ -18,31 +18,16 @@ namespace GHelper.UI
             }
         }
 
-        private float pop = 1f;
-        private int popStep;
-        private static readonly float[] popTargets = { 1.25f, 1f, 1.2f, 1f };
-        private readonly System.Windows.Forms.Timer popTimer = new() { Interval = 30 };
+        private readonly FluentTransition pop;
 
-        public RBadgeButton()
-        {
-            popTimer.Tick += delegate
-            {
-                var target = popTargets[popStep];
-                pop += (target - pop) * 0.3f;
-                if (Math.Abs(target - pop) < 0.03f)
-                {
-                    pop = target;
-                    if (++popStep == popTargets.Length) { popStep = 0; popTimer.Stop(); }
-                }
-                Invalidate();
-            };
-        }
+        public RBadgeButton() => pop = new(this, 1f);
 
         public void Pop(int value)
         {
-            if (badge == 0) pop = 0f;
+            bool appeared = badge <= 0;
             Badge = value;
-            popTimer.Start();
+            if (value > 0) pop.PlayFrom(appeared ? 0.78f : 1.14f, 1f, FluentTransition.Standard);
+            else pop.SnapTo(1f);
         }
 
         protected override void OnPaint(PaintEventArgs pevent)
@@ -56,7 +41,7 @@ namespace GHelper.UI
 
             using (Brush brush = new SolidBrush(BorderColor))
             {
-                var radius = ratio * 14 * pop;
+                var radius = ratio * 14 * pop.Value;
                 var badgeRect = new RectangleF(
                     rectSurface.Width - rectSurface.Height / 2f - radius,
                     rectSurface.Height / 2f - radius,

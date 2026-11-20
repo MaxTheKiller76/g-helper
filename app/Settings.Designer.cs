@@ -32,7 +32,7 @@ namespace GHelper
         {
             components = new System.ComponentModel.Container();
             toolTip = new ToolTip(components);
-            panelMatrix = new Panel();
+            panelMatrix = new FluentCard { BottomGap = 6 };
             tableLayoutMatrix = new TableLayoutPanel();
             comboMatrix = new RComboBox();
             comboMatrixRunning = new RComboBox();
@@ -40,7 +40,7 @@ namespace GHelper
             panelMatrixTitle = new Panel();
             pictureMatrix = new PictureBox();
             labelMatrix = new Label();
-            panelBattery = new Panel();
+            panelBattery = new FluentCard { BottomGap = 6 };
             buttonBatteryFull = new RButton();
             sliderBattery = new Slider();
             panelBatteryTitle = new Panel();
@@ -49,11 +49,10 @@ namespace GHelper
             labelBatteryTitle = new Label();
             panelFooter = new Panel();
             tableButtons = new TableLayoutPanel();
-            buttonDonate = new RBadgeButton();
             buttonQuit = new RButton();
             buttonUpdates = new RButton();
-            checkStartup = new CheckBox();
-            panelPerformance = new Panel();
+            checkStartup = new FluentToggle();
+            panelPerformance = new FluentCard { BottomGap = 6 };
             tablePerf = new TableLayoutPanel();
             buttonSilent = new RButton();
             buttonBalanced = new RButton();
@@ -62,9 +61,9 @@ namespace GHelper
             panelCPUTitle = new Panel();
             picturePerf = new PictureBox();
             labelPerf = new Label();
-            labelCPUFan = new Label();
-            panelGPU = new Panel();
-            labelTipGPU = new Label();
+            labelCPUFan = new FluentCaption();
+            panelGPU = new FluentCard { BottomGap = 6 };
+            labelTipGPU = new FluentCaption();
             tableAMD = new TableLayoutPanel();
             buttonAutoTDP = new RButton();
             buttonFPS = new RButton();
@@ -79,9 +78,9 @@ namespace GHelper
             panelGPUTitle = new Panel();
             pictureGPU = new PictureBox();
             labelGPU = new Label();
-            labelGPUFan = new Label();
-            panelScreen = new Panel();
-            labelTipScreen = new Label();
+            labelGPUFan = new FluentCaption();
+            panelScreen = new FluentCard { BottomGap = 6 };
+            labelTipScreen = new FluentCaption();
             tableScreen = new TableLayoutPanel();
             buttonScreenAuto = new RButton();
             button60Hz = new RButton();
@@ -89,10 +88,10 @@ namespace GHelper
             buttonMiniled = new RButton();
             buttonFHD = new RButton();
             panelScreenTitle = new Panel();
-            labelMidFan = new Label();
+            labelMidFan = new FluentCaption();
             pictureScreen = new PictureBox();
             labelSreen = new Label();
-            panelKeyboard = new Panel();
+            panelKeyboard = new FluentCard { BottomGap = 6 };
             labelBacklight = new Label();
             tableLayoutKeyboard = new TableLayoutPanel();
             buttonKeyboard = new RButton();
@@ -103,21 +102,21 @@ namespace GHelper
             buttonOverlay = new RButton();
             pictureKeyboard = new PictureBox();
             labelKeyboard = new Label();
-            panelRearLight = new Panel();
+            panelRearLight = new FluentCard { BottomGap = 6 };
             tableLayoutRearLight = new TableLayoutPanel();
             buttonRearColor = new RColorButton();
             comboRearLight = new RComboBox();
             panelRearLightTitle = new Panel();
             pictureRearLight = new PictureBox();
             labelRearLight = new Label();
-            panelStartup = new Panel();
-            labelCharge = new Label();
-            panelPeripherals = new Panel();
+            panelStartup = new FluentCard();
+            labelCharge = new FluentCaption();
+            panelPeripherals = new FluentCard { BottomGap = 6 };
             tableLayoutPeripherals = new TableLayoutPanel();
             buttonPeripheral3 = new RButton();
             buttonPeripheral2 = new RButton();
             buttonPeripheral1 = new RButton();
-            panelAlly = new Panel();
+            panelAlly = new FluentCard { BottomGap = 6 };
             tableLayoutAlly = new TableLayoutPanel();
             buttonController = new RButton();
             buttonBacklight = new RButton();
@@ -125,7 +124,7 @@ namespace GHelper
             panelAllyTitle = new Panel();
             pictureAlly = new PictureBox();
             labelAlly = new Label();
-            panelGamma = new Panel();
+            panelGamma = new FluentCard { BottomGap = 6 };
             labelVisual = new Label();
             tableVisual = new TableLayoutPanel();
             buttonInstallColor = new RButton();
@@ -141,7 +140,7 @@ namespace GHelper
             buttonEnergySaver = new RButton();
             buttonAmdOled = new RButton();
             buttonArmoury = new RButton();
-            labelVersion = new Label();
+            labelVersion = new FluentCaption();
             buttonHDRControl = new RButton();
             panelMatrix.SuspendLayout();
             tableLayoutMatrix.SuspendLayout();
@@ -198,7 +197,7 @@ namespace GHelper
             panelMatrix.Location = new Point(11, 1071);
             panelMatrix.Margin = new Padding(0);
             panelMatrix.Name = "panelMatrix";
-            panelMatrix.Padding = new Padding(20, 20, 20, 11);
+            panelMatrix.Padding = new Padding(24, 16, 24, 24);
             panelMatrix.Size = new Size(827, 183);
             panelMatrix.TabIndex = 4;
             panelMatrix.TabStop = true;
@@ -320,7 +319,7 @@ namespace GHelper
             panelBattery.Location = new Point(11, 1683);
             panelBattery.Margin = new Padding(0);
             panelBattery.Name = "panelBattery";
-            panelBattery.Padding = new Padding(20, 15, 20, 0);
+            panelBattery.Padding = new Padding(24, 16, 24, 22);
             panelBattery.Size = new Size(827, 104);
             panelBattery.TabIndex = 8;
             // 
@@ -413,21 +412,18 @@ namespace GHelper
             panelFooter.Location = new Point(11, 1887);
             panelFooter.Margin = new Padding(0);
             panelFooter.Name = "panelFooter";
-            panelFooter.Padding = new Padding(20, 10, 20, 20);
+            panelFooter.Padding = new Padding(0, 8, 0, 4);
             panelFooter.Size = new Size(827, 88);
             panelFooter.TabIndex = 11;
             // 
             // tableButtons
             // 
             tableButtons.AutoSize = true;
-            tableButtons.ColumnCount = 3;
-            tableButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.3333321F));
-            tableButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.3333321F));
-            tableButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.3333321F));
-            tableButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 27F));
-            tableButtons.Controls.Add(buttonDonate, 0, 0);
-            tableButtons.Controls.Add(buttonQuit, 2, 0);
-            tableButtons.Controls.Add(buttonUpdates, 1, 0);
+            tableButtons.ColumnCount = 2;
+            tableButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tableButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tableButtons.Controls.Add(buttonUpdates, 0, 0);
+            tableButtons.Controls.Add(buttonQuit, 1, 0);
             tableButtons.Dock = DockStyle.Top;
             tableButtons.Location = new Point(20, 10);
             tableButtons.Margin = new Padding(8, 4, 8, 4);
@@ -436,27 +432,6 @@ namespace GHelper
             tableButtons.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             tableButtons.Size = new Size(787, 58);
             tableButtons.TabIndex = 25;
-            // 
-            // buttonDonate
-            // 
-            buttonDonate.Activated = false;
-            buttonDonate.BackColor = SystemColors.ControlLight;
-            buttonDonate.Badge = 0;
-            buttonDonate.BorderColor = Color.Transparent;
-            buttonDonate.BorderRadius = 2;
-            buttonDonate.Dock = DockStyle.Top;
-            buttonDonate.FlatStyle = FlatStyle.Flat;
-            buttonDonate.Image = Properties.Resources.icons8_heart_32;
-            buttonDonate.ImageAlign = ContentAlignment.MiddleRight;
-            buttonDonate.Location = new Point(4, 5);
-            buttonDonate.Margin = new Padding(4, 5, 4, 5);
-            buttonDonate.Name = "buttonDonate";
-            buttonDonate.Secondary = true;
-            buttonDonate.Size = new Size(254, 48);
-            buttonDonate.TabIndex = 3;
-            buttonDonate.Text = "&Donate";
-            buttonDonate.TextImageRelation = TextImageRelation.ImageBeforeText;
-            buttonDonate.UseVisualStyleBackColor = false;
             // 
             // buttonQuit
             // 
@@ -467,11 +442,11 @@ namespace GHelper
             buttonQuit.Dock = DockStyle.Top;
             buttonQuit.FlatStyle = FlatStyle.Flat;
             buttonQuit.Image = Properties.Resources.icons8_quit_32;
-            buttonQuit.Location = new Point(528, 5);
+            buttonQuit.Location = new Point(397, 5);
             buttonQuit.Margin = new Padding(4, 5, 4, 5);
             buttonQuit.Name = "buttonQuit";
             buttonQuit.Secondary = true;
-            buttonQuit.Size = new Size(255, 48);
+            buttonQuit.Size = new Size(386, 58);
             buttonQuit.TabIndex = 2;
             buttonQuit.Text = "&Quit";
             buttonQuit.TextAlign = ContentAlignment.MiddleRight;
@@ -488,11 +463,11 @@ namespace GHelper
             buttonUpdates.FlatStyle = FlatStyle.Flat;
             buttonUpdates.Image = Properties.Resources.icons8_software_32_white;
             buttonUpdates.ImageAlign = ContentAlignment.MiddleRight;
-            buttonUpdates.Location = new Point(266, 5);
+            buttonUpdates.Location = new Point(4, 5);
             buttonUpdates.Margin = new Padding(4, 5, 4, 5);
             buttonUpdates.Name = "buttonUpdates";
             buttonUpdates.Secondary = true;
-            buttonUpdates.Size = new Size(254, 48);
+            buttonUpdates.Size = new Size(385, 58);
             buttonUpdates.TabIndex = 1;
             buttonUpdates.Text = "&Updates";
             buttonUpdates.TextImageRelation = TextImageRelation.ImageBeforeText;
@@ -505,11 +480,11 @@ namespace GHelper
             checkStartup.Location = new Point(20, 0);
             checkStartup.Margin = new Padding(11, 5, 11, 5);
             checkStartup.Name = "checkStartup";
-            checkStartup.Padding = new Padding(10, 0, 0, 0);
+            checkStartup.Padding = Padding.Empty;
             checkStartup.Size = new Size(216, 50);
             checkStartup.TabIndex = 21;
             checkStartup.Text = Properties.Strings.RunOnStartup;
-            checkStartup.UseVisualStyleBackColor = true;
+            checkStartup.UseVisualStyleBackColor = false;
             // 
             // panelPerformance
             // 
@@ -522,7 +497,7 @@ namespace GHelper
             panelPerformance.Location = new Point(11, 11);
             panelPerformance.Margin = new Padding(0);
             panelPerformance.Name = "panelPerformance";
-            panelPerformance.Padding = new Padding(20);
+            panelPerformance.Padding = new Padding(24, 16, 24, 24);
             panelPerformance.Size = new Size(827, 208);
             panelPerformance.TabIndex = 0;
             panelPerformance.TabStop = true;
@@ -545,7 +520,7 @@ namespace GHelper
             tablePerf.Margin = new Padding(8, 4, 8, 4);
             tablePerf.Name = "tablePerf";
             tablePerf.RowCount = 1;
-            tablePerf.RowStyles.Add(new RowStyle(SizeType.Absolute, 128F));
+            tablePerf.RowStyles.Add(new RowStyle(SizeType.Absolute, 112F));
             tablePerf.Size = new Size(787, 128);
             tablePerf.TabIndex = 29;
             // 
@@ -700,7 +675,7 @@ namespace GHelper
             panelGPU.Location = new Point(11, 219);
             panelGPU.Margin = new Padding(0);
             panelGPU.Name = "panelGPU";
-            panelGPU.Padding = new Padding(20, 20, 20, 0);
+            panelGPU.Padding = new Padding(24, 16, 24, 24);
             panelGPU.Size = new Size(827, 432);
             panelGPU.TabIndex = 1;
             panelGPU.TabStop = true;
@@ -1020,7 +995,7 @@ namespace GHelper
             panelScreen.Location = new Point(11, 651);
             panelScreen.Margin = new Padding(0);
             panelScreen.Name = "panelScreen";
-            panelScreen.Padding = new Padding(20, 11, 20, 0);
+            panelScreen.Padding = new Padding(24, 16, 24, 24);
             panelScreen.Size = new Size(827, 187);
             panelScreen.TabIndex = 2;
             panelScreen.TabStop = true;
@@ -1216,7 +1191,7 @@ namespace GHelper
             panelKeyboard.Location = new Point(11, 1394);
             panelKeyboard.Margin = new Padding(0);
             panelKeyboard.Name = "panelKeyboard";
-            panelKeyboard.Padding = new Padding(20, 20, 20, 0);
+            panelKeyboard.Padding = new Padding(24, 16, 24, 24);
             panelKeyboard.Size = new Size(827, 146);
             panelKeyboard.TabIndex = 6;
             panelKeyboard.TabStop = true;
@@ -1398,7 +1373,7 @@ namespace GHelper
             panelRearLight.Location = new Point(11, 1540);
             panelRearLight.Margin = new Padding(0);
             panelRearLight.Name = "panelRearLight";
-            panelRearLight.Padding = new Padding(20, 20, 20, 0);
+            panelRearLight.Padding = new Padding(24, 16, 24, 24);
             panelRearLight.Size = new Size(827, 112);
             panelRearLight.TabIndex = 7;
             panelRearLight.TabStop = true;
@@ -1502,8 +1477,8 @@ namespace GHelper
             panelStartup.Location = new Point(11, 1787);
             panelStartup.Margin = new Padding(0);
             panelStartup.Name = "panelStartup";
-            panelStartup.Padding = new Padding(20, 0, 20, 0);
-            panelStartup.Size = new Size(827, 50);
+            panelStartup.Padding = new Padding(24, 4, 24, 4);
+            panelStartup.Size = new Size(827, 68);
             panelStartup.TabIndex = 9;
             // 
             // labelCharge
@@ -1527,7 +1502,7 @@ namespace GHelper
             panelPeripherals.Location = new Point(11, 1540);
             panelPeripherals.Margin = new Padding(0);
             panelPeripherals.Name = "panelPeripherals";
-            panelPeripherals.Padding = new Padding(20, 5, 20, 10);
+            panelPeripherals.Padding = new Padding(24, 14, 24, 24);
             panelPeripherals.Size = new Size(827, 143);
             panelPeripherals.TabIndex = 7;
             panelPeripherals.Visible = false;
@@ -1636,7 +1611,7 @@ namespace GHelper
             panelAlly.Location = new Point(11, 1254);
             panelAlly.Margin = new Padding(0);
             panelAlly.Name = "panelAlly";
-            panelAlly.Padding = new Padding(20, 20, 20, 0);
+            panelAlly.Padding = new Padding(24, 16, 24, 24);
             panelAlly.Size = new Size(827, 140);
             panelAlly.TabIndex = 5;
             panelAlly.TabStop = true;
@@ -1773,7 +1748,7 @@ namespace GHelper
             panelGamma.Location = new Point(11, 838);
             panelGamma.Margin = new Padding(0);
             panelGamma.Name = "panelGamma";
-            panelGamma.Padding = new Padding(20, 11, 20, 11);
+            panelGamma.Padding = new Padding(24, 16, 24, 24);
             panelGamma.Size = new Size(827, 233);
             panelGamma.TabIndex = 3;
             panelGamma.Visible = false;
@@ -1953,7 +1928,7 @@ namespace GHelper
             panelVersion.Location = new Point(11, 1837);
             panelVersion.MinimumSize = new Size(0, 50);
             panelVersion.Name = "panelVersion";
-            panelVersion.Padding = new Padding(20, 5, 24, 5);
+            panelVersion.Padding = new Padding(5, 5, 5, 5);
             panelVersion.Size = new Size(827, 50);
             panelVersion.TabIndex = 10;
             // 
@@ -2063,6 +2038,7 @@ namespace GHelper
             // 
             AutoScaleDimensions = new SizeF(192F, 192F);
             AutoScaleMode = AutoScaleMode.Dpi;
+            AutoScroll = true;
             AutoSize = true;
             AutoSizeMode = AutoSizeMode.GrowAndShrink;
             ClientSize = new Size(849, 2075);
@@ -2083,9 +2059,9 @@ namespace GHelper
             MaximizeBox = false;
             MdiChildrenMinimizedAnchorBottom = false;
             MinimizeBox = false;
-            MinimumSize = new Size(821, 71);
+            MinimumSize = new Size(905, 71);
             Name = "SettingsForm";
-            Padding = new Padding(11);
+            Padding = new Padding(28, 10, 28, 22);
             ShowIcon = false;
             StartPosition = FormStartPosition.CenterScreen;
             Text = "G-Helper";
@@ -2257,7 +2233,6 @@ namespace GHelper
         private Label labelBacklight;
         private Panel panelVersion;
         private Label labelVersion;
-        private RBadgeButton buttonDonate;
         private RButton buttonEnergySaver;
         private RButton buttonAmdOled;
         private RButton buttonArmoury;

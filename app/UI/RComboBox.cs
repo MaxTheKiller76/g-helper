@@ -6,7 +6,7 @@ namespace GHelper.UI
 {
     public class RComboBox : ComboBox
     {
-        private const int TextLeftPad = 1;
+        private const int ItemTextPadding = 6;
         public bool UseCustomTextPadding = true;
 
         public RComboBox()
@@ -53,19 +53,23 @@ namespace GHelper.UI
                 return;
             }
 
-            bool selected = (e.State & DrawItemState.Selected) != 0;
-            Color bg = selected ? RForm.borderMain : BackColor;
-            Color fg = ForeColor;
+            bool selected = (e.State & (DrawItemState.Selected | DrawItemState.ComboBoxEdit)) == DrawItemState.Selected;
+            Color bg = selected
+                ? FluentTheme.HighContrast ? SystemColors.Highlight : FluentTheme.Blend(BackColor, FluentTheme.Accent, 0.16f)
+                : BackColor;
+            Color fg = !Enabled ? FluentTheme.DisabledText
+                : selected && FluentTheme.HighContrast ? SystemColors.HighlightText : ForeColor;
 
             using (var bgBrush = new SolidBrush(bg))
                 e.Graphics.FillRectangle(bgBrush, e.Bounds);
 
-            int pad = (int)Math.Round(TextLeftPad * e.Graphics.DpiX / 96f);
-            var textRect = new Rectangle(e.Bounds.X + pad, e.Bounds.Y,
-                e.Bounds.Width - pad, e.Bounds.Height);
+            int pad = Math.Min(FluentTheme.Scale(this, ItemTextPadding), e.Bounds.Width / 4);
+            var textRect = Rectangle.Inflate(e.Bounds, -pad, 0);
+            TextFormatFlags alignment = RightToLeft == RightToLeft.Yes
+                ? TextFormatFlags.RightToLeft | TextFormatFlags.Right : TextFormatFlags.Left;
 
             TextRenderer.DrawText(e.Graphics, GetItemText(Items[e.Index]), e.Font, textRect, fg,
-                TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+                alignment | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
 
             e.DrawFocusRectangle();
         }
@@ -119,35 +123,22 @@ namespace GHelper.UI
 
         public static GraphicsPath RoundedRect(Rectangle bounds, int radiusL, int radiusR)
         {
+            var path = new GraphicsPath();
+            if (bounds.Width <= 0 || bounds.Height <= 0) return path;
+
+            int limit = Math.Min(bounds.Width, bounds.Height) / 2;
+            radiusL = Math.Clamp(radiusL, 0, limit);
+            radiusR = Math.Clamp(radiusR, 0, limit);
             int diameterL = radiusL * 2;
             int diameterR = radiusR * 2;
-
-            Size sizeL = new Size(diameterL, diameterL);
-            Size sizeR = new Size(diameterR, diameterR);
-
-            Rectangle arcL = new Rectangle(bounds.Location, sizeL);
-            Rectangle arcR = new Rectangle(bounds.Location, sizeR);
-
-            GraphicsPath path = new GraphicsPath();
-
-            // top left arc  
-            path.AddArc(arcL, 180, 90);
-
-            // top right arc  
-            arcR.X = bounds.Right - diameterR;
-            arcR.Y = bounds.Top;
-            path.AddArc(arcR, 270, 90);
-
-            // bottom right arc  
-            arcR.Y = bounds.Bottom - diameterR;
-            arcR.X = bounds.Right - diameterR;
-            path.AddArc(arcR, 0, 90);
-
-            // bottom left arc 
-            arcL.X = bounds.Left;
-            arcL.Y = bounds.Bottom - diameterL;
-            path.AddArc(arcL, 90, 90);
-
+            path.AddLine(bounds.Left + radiusL, bounds.Top, bounds.Right - radiusR, bounds.Top);
+            if (radiusR > 0) path.AddArc(bounds.Right - diameterR, bounds.Top, diameterR, diameterR, 270, 90);
+            path.AddLine(bounds.Right, bounds.Top + radiusR, bounds.Right, bounds.Bottom - radiusR);
+            if (radiusR > 0) path.AddArc(bounds.Right - diameterR, bounds.Bottom - diameterR, diameterR, diameterR, 0, 90);
+            path.AddLine(bounds.Right - radiusR, bounds.Bottom, bounds.Left + radiusL, bounds.Bottom);
+            if (radiusL > 0) path.AddArc(bounds.Left, bounds.Bottom - diameterL, diameterL, diameterL, 90, 90);
+            path.AddLine(bounds.Left, bounds.Bottom - radiusL, bounds.Left, bounds.Top + radiusL);
+            if (radiusL > 0) path.AddArc(bounds.Left, bounds.Top, diameterL, diameterL, 180, 90);
             path.CloseFigure();
             return path;
         }
@@ -180,7 +171,8 @@ namespace GHelper.UI
 
         protected override void WndProc(ref Message m)
         {
-            if (m.Msg == WM_PAINT && DropDownStyle != ComboBoxStyle.Simple)
+            if (m.Msg == WM_PAINT && DropDownStyle != ComboBoxStyle.Simple &&
+                ClientSize.Width > SystemInformation.HorizontalScrollBarArrowWidth + 6 && ClientSize.Height > 6)
             {
                 var clientRect = ClientRectangle;
                 var dropDownButtonWidth = SystemInformation.HorizontalScrollBarArrowWidth;
@@ -204,13 +196,16 @@ namespace GHelper.UI
                 var buttonColor = ButtonColor;
                 var middle = new Point(dropDownRect.Left + dropDownRect.Width / 2,
                     dropDownRect.Top + dropDownRect.Height / 2);
-                var arrow = new Point[]
-                {
-                new Point(middle.X - 3, middle.Y - 2),
-                new Point(middle.X + 4, middle.Y - 2),
-                new Point(middle.X, middle.Y + 2)
-                };
-                int outerRadius = Math.Max(1, (int)Math.Round(4 * DeviceDpi / 192f));
+                int arrowHalfWidth = FluentTheme.Scale(this, 4);
+                int arrowHalfHeight = FluentTheme.Scale(this, 2);
+                Point[] arrow =
+                [
+                    new Point(middle.X - arrowHalfWidth, middle.Y - arrowHalfHeight),
+                    new Point(middle.X, middle.Y + arrowHalfHeight),
+                    new Point(middle.X + arrowHalfWidth, middle.Y - arrowHalfHeight)
+                ];
+                bool active = Focused || DroppedDown;
+                int outerRadius = RForm.flatTheme ? 0 : FluentTheme.Scale(this, 4);
                 var formBackColor = Parent is not null ? Parent.BackColor : BackColor;
 
                 var ps = new PAINTSTRUCT();
@@ -249,16 +244,15 @@ namespace GHelper.UI
                 using (var g = Graphics.FromHdc(dc))
                 {
                     g.SmoothingMode = SmoothingMode.AntiAlias;
-                    using (var b = new SolidBrush(arrowColor))
-                        g.FillPolygon(b, arrow);
+                    using (var pen = new Pen(Enabled ? arrowColor : FluentTheme.DisabledText, 1.3f * DeviceDpi / 96f)
+                    { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round })
+                        g.DrawLines(pen, arrow);
                     if (DropDownStyle == ComboBoxStyle.DropDown)
                         using (var b = new SolidBrush(innerBorderColor))
                             g.FillRectangle(b, innerInnerBorder);
-                    if (RForm.flatTheme)
-                        using (var p = new Pen(BackColor))
-                            DrawRoundedRectangle(g, p, outerBorder, outerRadius, outerRadius);
-                    else
-                        ControlHelper.DrawGradientBorder(g, outerBorder, outerBorderColor, outerRadius);
+                    Color stroke = active ? FluentTheme.Accent : outerBorderColor;
+                    using var outline = new Pen(stroke);
+                    DrawRoundedRectangle(g, outline, outerBorder, outerRadius, outerRadius);
                 }
                 if (shoulEndPaint)
                     EndPaint(Handle, ref ps);

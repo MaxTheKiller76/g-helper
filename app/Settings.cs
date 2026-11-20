@@ -24,7 +24,6 @@ namespace GHelper
     {
         ContextMenuStrip contextMenuStrip = new CustomContextMenu();
         ToolStripMenuItem menuEco, menuStandard, menuUltimate, menuOptimized;
-        DonateControl donateControl;
 
         public GPUModeControl gpuControl;
         public AllyControl allyControl;
@@ -65,6 +64,7 @@ namespace GHelper
         {
 
             InitializeComponent();
+            InitializeDashboardHeading();
             InitTheme(true);
 
             gpuControl = new GPUModeControl(this);
@@ -102,7 +102,6 @@ namespace GHelper
             buttonMatrix.Text = "Matrix";
             buttonQuit.Text = Properties.Strings.Quit;
             buttonUpdates.Text = Properties.Strings.Updates;
-            buttonDonate.Text = Properties.Strings.Donate;
 
             buttonController.Text = Properties.Strings.Controller;
             labelAlly.Text = Properties.Strings.AllyController;
@@ -148,9 +147,6 @@ namespace GHelper
             buttonOptimized.BorderColor = colorEco;
             buttonXGM.BorderColor = colorTurbo;
 
-            button60Hz.BorderColor = colorGray;
-            button120Hz.BorderColor = colorGray;
-            buttonScreenAuto.BorderColor = colorGray;
             buttonMiniled.BorderColor = colorTurbo;
 
             buttonEnergySaver.BackColor = colorEco;
@@ -209,7 +205,6 @@ namespace GHelper
             checkStartup.CheckedChanged += CheckStartup_CheckedChanged;
 
             labelVersion.Click += LabelVersion_Click;
-            labelVersion.ForeColor = Color.FromArgb(128, Color.Gray);
 
             buttonOptimized.MouseMove += ButtonOptimized_MouseHover;
             buttonOptimized.MouseLeave += ButtonGPU_MouseLeave;
@@ -286,7 +281,6 @@ namespace GHelper
             buttonAutoTDP.Click += ButtonAutoTDP_Click;
             buttonAutoTDP.BorderColor = colorTurbo;
 
-            Text = "G-Helper " + (ProcessHelper.IsUserAdministrator() ? "—" : "-") + " " + AppConfig.GetModelShort();
             TopMost = AppConfig.Is("topmost");
 
             //This will auto position the window again when it resizes. Might mess with position if people drag the window somewhere else.
@@ -297,9 +291,6 @@ namespace GHelper
 
             labelVisual.Click += LabelVisual_Click;
             labelCharge.Click += LabelCharge_Click;
-
-            donateControl = new DonateControl(this, buttonDonate);
-            donateControl.Init();
 
             labelBacklight.ForeColor = colorStandard;
             labelBacklight.Click += LabelBacklight_Click;
@@ -966,8 +957,6 @@ namespace GHelper
                 contextMenuStrip.BackColor = this.BackColor;
                 contextMenuStrip.ForeColor = this.ForeColor;
             }
-
-            donateControl?.ApplyTheme();
         }
 
         private void ButtonXGM_Click(object? sender, EventArgs e)
@@ -2105,19 +2094,12 @@ namespace GHelper
         public void VisualiseBatteryFull()
         {
             if (InvokeRequired) { Invoke(VisualiseBatteryFull); return; }
-            if (BatteryControl.chargeFull)
-            {
-                buttonBatteryFull.BackColor = colorStandard;
-                buttonBatteryFull.ForeColor = SystemColors.ControlLightLight;
-                buttonBatteryFull.AccessibleName = Properties.Strings.BatteryChargeLimit + "100% on";
-            }
-            else
-            {
-                buttonBatteryFull.BackColor = buttonSecond;
-                buttonBatteryFull.ForeColor = SystemColors.ControlDark;
-                buttonBatteryFull.AccessibleName = Properties.Strings.BatteryChargeLimit + "100% off";
-            }
-
+            bool full = BatteryControl.chargeFull;
+            buttonBatteryFull.BackColor = buttonMain;
+            buttonBatteryFull.ForeColor = full ? foreMain : FluentTheme.SecondaryText;
+            buttonBatteryFull.BorderColor = FluentTheme.Accent;
+            buttonBatteryFull.Activated = full;
+            buttonBatteryFull.AccessibleName = Properties.Strings.BatteryChargeLimit + (full ? "100% on" : "100% off");
         }
 
 
@@ -2378,26 +2360,21 @@ namespace GHelper
         public void VisualiseOverlay()
         {
             bool enabled = AppConfig.IsOverlay();
-            buttonOverlay.BackColor = enabled ? colorEco : buttonSecond;
-            buttonOverlay.ForeColor = enabled ? SystemColors.ControlLightLight : SystemColors.ControlDark;
+            buttonOverlay.BackColor = buttonMain;
+            buttonOverlay.ForeColor = enabled ? foreMain : FluentTheme.SecondaryText;
+            buttonOverlay.BorderColor = FluentTheme.Accent;
+            buttonOverlay.Activated = enabled;
             buttonOverlayAlly.Activated = enabled;
         }
 
         public void VisualiseFnLock()
         {
-
-            if (AppConfig.Is("fn_lock"))
-            {
-                buttonFnLock.BackColor = colorStandard;
-                buttonFnLock.ForeColor = SystemColors.ControlLightLight;
-                buttonFnLock.AccessibleName = "Fn-Lock on";
-            }
-            else
-            {
-                buttonFnLock.BackColor = buttonSecond;
-                buttonFnLock.ForeColor = SystemColors.ControlDark;
-                buttonFnLock.AccessibleName = "Fn-Lock off";
-            }
+            bool locked = AppConfig.Is("fn_lock");
+            buttonFnLock.BackColor = buttonMain;
+            buttonFnLock.ForeColor = locked ? foreMain : FluentTheme.SecondaryText;
+            buttonFnLock.BorderColor = FluentTheme.Accent;
+            buttonFnLock.Activated = locked;
+            buttonFnLock.AccessibleName = locked ? "Fn-Lock on" : "Fn-Lock off";
         }
 
 

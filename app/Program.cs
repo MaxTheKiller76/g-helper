@@ -7,6 +7,7 @@ using GHelper.Input;
 using GHelper.Mode;
 using GHelper.Overlay;
 using GHelper.Peripherals;
+using GHelper.UI;
 using GHelper.USB;
 using Microsoft.Win32;
 using System.Diagnostics;
@@ -223,7 +224,8 @@ namespace GHelper
                 hardwareOverlay?.StartOverlay();
 
             Application.ApplicationExit += OnExit;
-            Application.Run();
+            try { Application.Run(); }
+            finally { WindowComposition.Shutdown(); }
         }
 
 
@@ -262,38 +264,31 @@ namespace GHelper
 
         static void SystemEvents_UserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
         {
-
-            switch (e.Category)
-            {
-                case UserPreferenceCategory.General:
-                    if (!settingsForm.InitTheme()) return;
-
-                    Debug.WriteLine("Theme Changed");
-                    settingsForm.InitContextMenuTheme();
-                    settingsForm.VisualiseIcon(true);
-                    settingsForm.VisualiseFnLock();
-                    settingsForm.VisualiseBatteryFull();
-
-                    if (settingsForm.fansForm is not null && settingsForm.fansForm.Text != "")
-                        settingsForm.fansForm.InitTheme();
-
-                    if (settingsForm.extraForm is not null && settingsForm.extraForm.Text != "")
-                        settingsForm.extraForm.InitTheme();
-
-                    if (settingsForm.updatesForm is not null && settingsForm.updatesForm.Text != "")
-                        settingsForm.updatesForm.InitTheme();
-
-                    if (settingsForm.matrixForm is not null && settingsForm.matrixForm.Text != "")
-                        settingsForm.matrixForm.InitTheme();
-
-                    if (settingsForm.handheldForm is not null && settingsForm.handheldForm.Text != "")
-                        settingsForm.handheldForm.InitTheme();
-
-                    break;
-            }
+            if (e.Category is UserPreferenceCategory.General or UserPreferenceCategory.Color or UserPreferenceCategory.VisualStyle)
+                RefreshTheme();
         }
 
+        internal static void RefreshTheme()
+        {
+            if (settingsForm.IsDisposed) return;
+            if (settingsForm.InvokeRequired)
+            {
+                settingsForm.BeginInvoke(RefreshTheme);
+                return;
+            }
 
+            if (settingsForm.InitTheme())
+            {
+                settingsForm.InitContextMenuTheme();
+                settingsForm.VisualiseIcon(true);
+                settingsForm.VisualiseFnLock();
+                settingsForm.VisualiseOverlay();
+                settingsForm.VisualiseBatteryFull();
+            }
+
+            foreach (var window in Application.OpenForms.OfType<RForm>().ToArray())
+                if (window != settingsForm) window.InitTheme();
+        }
 
         public static bool SetAutoModes(bool powerChanged = false, bool init = false, bool wakeup = false)
         {
@@ -440,6 +435,7 @@ namespace GHelper
                 var screen = Screen.PrimaryScreen;
                 if (screen is null) screen = Screen.FromControl(settingsForm);
 
+                settingsForm.FitDashboardTo(screen.WorkingArea);
                 settingsForm.WindowState = FormWindowState.Normal;
 
                 settingsForm.Location = screen.WorkingArea.Location;

@@ -33,7 +33,7 @@ namespace GHelper
             panelProfiles = new Panel();
             comboProfile = new GHelper.UI.RComboBox();
             labelProfile = new Label();
-            panelPerformance = new Panel();
+            panelPerformance = new FluentCard();
             panelPerformanceOther = new Panel();
             panelDeceleration = new Panel();
             labelDeceleration = new Label();
@@ -81,7 +81,7 @@ namespace GHelper
             panelPerformanceHeader = new Panel();
             pictureKeyboard = new PictureBox();
             labelPerformance = new Label();
-            panelLighting = new Panel();
+            panelLighting = new FluentCard();
             panelLightingContent = new Panel();
             tableLayoutLightingZones = new TableLayoutPanel();
             buttonLightingZoneScroll = new GHelper.UI.RButton();
@@ -102,7 +102,7 @@ namespace GHelper
             sliderBrightness = new GHelper.UI.Slider();
             pictureBoxLighting = new PictureBox();
             labelLighting = new Label();
-            panelEnergy = new Panel();
+            panelEnergy = new FluentCard();
             labelLowBatteryWarningValue = new Label();
             comboBoxAutoPowerOff = new GHelper.UI.RComboBox();
             sliderLowBatteryWarning = new GHelper.UI.Slider();

@@ -40,7 +40,7 @@ namespace GHelper
             ChartArea chartArea4 = new ChartArea();
             Title title4 = new Title();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Fans));
-            panelFans = new Panel();
+            panelFans = new FluentCard();
             checkFanClamp = new RCheckBox();
             labelTip = new Label();
             tableFanCharts = new TableLayoutPanel();
@@ -70,7 +70,7 @@ namespace GHelper
             checkApplyFans = new RCheckBox();
             buttonReset = new RButton();
             comboBoost = new RComboBox();
-            panelSliders = new Panel();
+            panelSliders = new FluentCard();
             panelAdvanced = new Panel();
             panelAdvancedAlways = new Panel();
             checkApplyUV = new RCheckBox();
@@ -265,7 +265,7 @@ namespace GHelper
             panelFans.Margin = new Padding(0);
             panelFans.MinimumSize = new Size(816, 0);
             panelFans.Name = "panelFans";
-            panelFans.Padding = new Padding(0, 0, 10, 0);
+            panelFans.Padding = new Padding(18, 12, 18, 14);
             panelFans.Size = new Size(820, 1100);
             panelFans.TabIndex = 12;
             // 
@@ -700,7 +700,7 @@ namespace GHelper
             panelSliders.Margin = new Padding(0);
             panelSliders.MinimumSize = new Size(530, 0);
             panelSliders.Name = "panelSliders";
-            panelSliders.Padding = new Padding(10, 0, 0, 0);
+            panelSliders.Padding = new Padding(12, 12, 12, 14);
             panelSliders.Size = new Size(530, 1100);
             panelSliders.TabIndex = 13;
             // 

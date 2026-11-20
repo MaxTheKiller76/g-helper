@@ -34,11 +34,21 @@ namespace GHelper.UI
         [DllImport("UXTheme.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         private static extern int SetWindowTheme(nint hWnd, string pszSubAppName, string? pszSubIdList);
 
-        [DllImport("DwmApi")] //System.Runtime.InteropServices
-        private static extern int DwmSetWindowAttribute(nint hwnd, int attr, int[] attrValue, int attrSize);
+        private const int UseImmersiveDarkMode = 20;
+        private const int CaptionColor = 35;
+        private const int CaptionTextColor = 36;
+        private const int WindowPositionChanged = 0x0047;
 
         public bool darkTheme = false;
         private bool themeInitialized = false;
+        private Color themeAccent;
+        private bool contrastTheme;
+        private bool acrylicRequested;
+        private AcrylicMode acrylicMode;
+        private readonly AcrylicBackdrop acrylicBackdrop = new();
+        private AcrylicSurface? acrylicSurface;
+        internal bool HasAcrylicFrame => acrylicMode == AcrylicMode.Frame;
+        protected virtual Padding AcrylicInsets => Padding;
         protected override CreateParams CreateParams
         {
             get
@@ -49,40 +59,97 @@ namespace GHelper.UI
                 return parms;
             }
         }
-        public static void InitColors(bool darkTheme)
+
+        protected override void OnHandleCreated(EventArgs e)
         {
-            flatTheme = AppConfig.GetString("theme")?.ToLower() == "flat";
+            base.OnHandleCreated(e);
+            if (themeInitialized) ApplyWindowTheme();
+        }
 
-            if (darkTheme)
+        protected override void OnHandleDestroyed(EventArgs e)
+        {
+            acrylicBackdrop.Dispose();
+            base.OnHandleDestroyed(e);
+        }
+
+        protected override void WndProc(ref Message message)
+        {
+            base.WndProc(ref message);
+            if (message.Msg == WindowPositionChanged && IsHandleCreated)
+                acrylicBackdrop?.UpdateWindow(message.HWnd);
+        }
+
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            base.OnPaintBackground(e);
+            if (!HasAcrylicFrame) return;
+
+            var area = ClientRectangle;
+            var insets = AcrylicInsets;
+            AcrylicBackdrop.Clear(e.Graphics, Rectangle.Intersect(e.ClipRectangle,
+                new Rectangle(area.Left, area.Top, area.Width, insets.Top)));
+            AcrylicBackdrop.Clear(e.Graphics, Rectangle.Intersect(e.ClipRectangle,
+                new Rectangle(area.Left, area.Bottom - insets.Bottom, area.Width, insets.Bottom)));
+            AcrylicBackdrop.Clear(e.Graphics, Rectangle.Intersect(e.ClipRectangle,
+                new Rectangle(area.Left, area.Top, insets.Left, area.Height)));
+            AcrylicBackdrop.Clear(e.Graphics, Rectangle.Intersect(e.ClipRectangle,
+                new Rectangle(area.Right - insets.Right, area.Top, insets.Right, area.Height)));
+        }
+
+        private void ApplyWindowTheme()
+        {
+            int immersiveDarkMode = darkTheme && !contrastTheme ? 1 : 0;
+            AcrylicBackdrop.SetWindowAttribute(Handle, UseImmersiveDarkMode, immersiveDarkMode);
+            acrylicMode = acrylicBackdrop.Apply(Handle, acrylicRequested, AcrylicInsets);
+            if (acrylicMode == AcrylicMode.FullWindow)
             {
-                buttonMain = Color.FromArgb(255, 46, 46, 46);
-                buttonSecond = Color.FromArgb(255, 36, 36, 36);
-
-                formBack = Color.FromArgb(255, 28, 28, 28);
-                foreMain = Color.FromArgb(255, 240, 240, 240);
-                borderMain = Color.FromArgb(255, 55, 55, 55);
-                borderSecond = Color.FromArgb(255, 42, 42, 42);
-
-                chartMain = Color.FromArgb(255, 35, 35, 35);
-                chartGrid = Color.FromArgb(255, 70, 70, 70);
+                acrylicSurface ??= new AcrylicSurface(this);
+                acrylicSurface.HasLiveBackdrop = acrylicBackdrop.IsLive;
             }
             else
             {
-                buttonMain = SystemColors.ControlLightLight;
-                buttonSecond = SystemColors.ControlLight;
-
-                formBack = SystemColors.Control;
-                foreMain = SystemColors.ControlText;
-                borderMain = Color.FromArgb(255, 220, 220, 220);
-                borderSecond = Color.FromArgb(255, 215, 215, 215);
-
-                chartMain = SystemColors.ControlLightLight;
-                chartGrid = Color.LightGray;
+                acrylicSurface?.Dispose();
+                acrylicSurface = null;
             }
+
+            bool defaultCaption = contrastTheme || acrylicMode != AcrylicMode.Solid;
+            int caption = defaultCaption && !acrylicBackdrop.IsLive ? -1 : ColorTranslator.ToWin32(formBack);
+            int captionText = defaultCaption ? -1 : ColorTranslator.ToWin32(foreMain);
+            AcrylicBackdrop.SetWindowAttribute(Handle, CaptionColor, caption);
+            AcrylicBackdrop.SetWindowAttribute(Handle, CaptionTextColor, captionText);
+            SetPreferredAppMode(immersiveDarkMode);
+            SetWindowTheme(Handle, immersiveDarkMode == 1 ? "DarkMode_Explorer" : "Explorer", null);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                acrylicSurface?.Dispose();
+                acrylicSurface = null;
+                acrylicBackdrop.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        public static void InitColors(bool darkTheme, bool acrylic = false)
+        {
+            flatTheme = AppConfig.GetString("theme")?.ToLower() == "flat";
+            FluentTheme.Update(darkTheme, acrylic);
+            buttonMain = FluentTheme.ControlFill;
+            buttonSecond = FluentTheme.Card;
+            formBack = FluentTheme.Canvas;
+            foreMain = FluentTheme.Text;
+            borderMain = FluentTheme.Stroke;
+            borderSecond = FluentTheme.CardStroke;
+            chartMain = FluentTheme.Card;
+            chartGrid = FluentTheme.Blend(chartMain, foreMain, 0.19f);
         }
 
         private static bool IsDarkTheme()
         {
+            if (SystemInformation.HighContrast) return SystemColors.Window.GetBrightness() < 0.5f;
+
             string? uiMode = AppConfig.GetString("ui_mode");
 
             if (uiMode is not null && uiMode.ToLower() == "dark")
@@ -110,23 +177,28 @@ namespace GHelper.UI
         public bool InitTheme(bool setDPI = false)
         {
             bool newDarkTheme = IsDarkTheme();
-            bool changed = darkTheme != newDarkTheme;
+            bool darkChanged = darkTheme != newDarkTheme;
             bool firstInit = !themeInitialized;
             darkTheme = newDarkTheme;
-            themeInitialized = true;
 
-            InitColors(darkTheme);
+            bool enabled = AcrylicBackdrop.IsRequested && AcrylicBackdrop.IsAvailable;
+            bool requested = enabled && TransparencyKey.IsEmpty && Opacity == 1;
+            InitColors(darkTheme, enabled && AcrylicBackdrop.SupportsFullWindow);
+            bool changed = darkChanged || themeAccent != FluentTheme.Accent || contrastTheme != FluentTheme.HighContrast ||
+                acrylicRequested != requested;
+            acrylicRequested = requested;
+            themeAccent = FluentTheme.Accent;
+            contrastTheme = FluentTheme.HighContrast;
 
             if (setDPI)
                 ControlHelper.Resize(this);
 
             if (changed || firstInit)
             {
-                DwmSetWindowAttribute(Handle, 20, new[] { darkTheme ? 1 : 0 }, 4);
-                SetPreferredAppMode(darkTheme ? 1 : 0); 
-                SetWindowTheme(Handle, darkTheme ? "DarkMode_Explorer" : "Explorer", null);
-                ControlHelper.Adjust(this, changed);
-                this.Invalidate();
+                ApplyWindowTheme();
+                ControlHelper.Adjust(this, darkChanged);
+                themeInitialized = true;
+                Invalidate(true);
             }
 
 

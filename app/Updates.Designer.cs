@@ -37,8 +37,8 @@ namespace GHelper
             panelBiosTitle = new Panel();
             labelUpdates = new Label();
             buttonRefresh = new RButton();
-            panelBios = new Panel();
-            panelDrivers = new Panel();
+            panelBios = new FluentCard();
+            panelDrivers = new FluentCard();
             tableDrivers = new TableLayoutPanel();
             panelDriversTitle = new Panel();
             labelDrivers = new Label();
