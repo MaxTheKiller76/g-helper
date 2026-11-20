@@ -1,6 +1,36 @@
-# G-Helper - Lightweight control tool for Asus laptops
+# G-Helper Fluent
+
+A fork of [G-Helper by seerge](https://github.com/seerge/g-helper) with a Fluent-style interface for ASUS laptops and handhelds.
+
+## Download
+
+**[Download GHelper.exe](https://github.com/MaxTheKiller76/g-helper/releases/latest/download/GHelper.exe)** · [Download ZIP](https://github.com/MaxTheKiller76/g-helper/releases/latest/download/GHelper.zip) · [Release notes](https://github.com/MaxTheKiller76/g-helper/releases/latest)
+
+This unsigned Windows x64 build requires the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/10.0). To update, quit G-Helper, replace your existing `GHelper.exe` with the latest download from this fork, and reopen it.
+
+## What's new
+
+- Redesigned dashboard and settings with Fluent controls and Windows accent colors.
+- Translucent Acrylic window blur that stays visible out of focus on supported Windows 11 builds. Find **Acrylic window blur** under **Extra Settings → Other**.
+- A short dashboard entrance and smooth button, switch, and slider transitions that follow Windows’ **Animation effects** setting.
+- Removed the Donate button from the app.
+
+## Build locally
+
+Install the [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) and run this command from the repository root.
+
+```powershell
+dotnet publish .\app\GHelper.csproj -c Release -r win-x64 --no-self-contained -p:PublishSingleFile=true -p:GITHUB_ACTIONS=true -o .\app\bin\fluent
+```
+
+The build writes `app/bin/fluent/GHelper.exe`.
+
+## Upstream G-Helper
 
 Small and lightweight Armoury Crate alternative for Asus laptops offering almost same functionality with a much smaller footprint. Works with all popular models, such as ROG Zephyrus G14, G15, G16, M16, X13, X16, Z13, DUO, TUF Series, Strix or Scar Series, ProArt, Vivobook, Zenbook, Expertbook, ROG Ally or Ally X and many more!
+
+<details>
+<summary>Upstream downloads, translations, and screenshots</summary>
 
 [![GitHub release](https://g-helper.com/badge/release.svg)](https://GitHub.com/seerge/g-helper/releases/)
 [![Downloads](https://g-helper.com/badge/downloads.svg)](https://GitHub.com/seerge/g-helper/releases/)
@@ -16,6 +46,8 @@ Small and lightweight Armoury Crate alternative for Asus laptops offering almost
 <a href="https://github.com/seerge/g-helper/releases/latest/download/GHelper.exe"><img width="250" alt="Download" src="https://g-helper.com/button/download.svg?lang=en" /></a> &nbsp; <a href="https://g-helper.com/support"><img width="250" alt="Donate" src="https://g-helper.com/button/donate.svg?lang=en" /></a>
 
 **⭐ Like the app? Help spread the word.**
+
+</details>
 
 - [FAQ](https://github.com/seerge/g-helper/wiki/FAQ)
 - [Setup and Requirements](https://github.com/seerge/g-helper/wiki/Requirements)
