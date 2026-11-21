@@ -34,6 +34,8 @@ namespace GHelper.UI
         [DllImport("UXTheme.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         private static extern int SetWindowTheme(nint hWnd, string pszSubAppName, string? pszSubIdList);
 
+        private const int TransitionsForcedDisabled = 3;
+        private const int CloakWindow = 13;
         private const int UseImmersiveDarkMode = 20;
         private const int CaptionColor = 35;
         private const int CaptionTextColor = 36;
@@ -47,6 +49,7 @@ namespace GHelper.UI
         private AcrylicMode acrylicMode;
         private readonly AcrylicBackdrop acrylicBackdrop = new();
         private AcrylicSurface? acrylicSurface;
+        private bool preparingAcrylicReveal;
         internal bool HasAcrylicFrame => acrylicMode == AcrylicMode.Frame;
         protected virtual Padding AcrylicInsets => Padding;
         protected override CreateParams CreateParams
@@ -72,10 +75,44 @@ namespace GHelper.UI
             base.OnHandleDestroyed(e);
         }
 
+        protected override void SetVisibleCore(bool value)
+        {
+            if (!value || Visible || acrylicSurface is null || preparingAcrylicReveal || !IsHandleCreated)
+            {
+                base.SetVisibleCore(value);
+                return;
+            }
+
+            nint window = Handle;
+            if (AcrylicBackdrop.SetWindowAttribute(window, CloakWindow, 1) < 0)
+            {
+                base.SetVisibleCore(value);
+                return;
+            }
+
+            // Let WinForms lay out and paint every child before DWM presents the first frame.
+            preparingAcrylicReveal = true;
+            try
+            {
+                base.SetVisibleCore(value);
+                if (IsHandleCreated && Handle == window && Visible)
+                {
+                    AcrylicSurface.PaintWholeWindow(window);
+                    acrylicBackdrop.UpdateWindow(window);
+                }
+            }
+            finally
+            {
+                preparingAcrylicReveal = false;
+                if (IsHandleCreated && Handle == window)
+                    AcrylicBackdrop.SetWindowAttribute(window, CloakWindow, 0);
+            }
+        }
+
         protected override void WndProc(ref Message message)
         {
             base.WndProc(ref message);
-            if (message.Msg == WindowPositionChanged && IsHandleCreated)
+            if (message.Msg == WindowPositionChanged && IsHandleCreated && !preparingAcrylicReveal)
                 acrylicBackdrop?.UpdateWindow(message.HWnd);
         }
 
@@ -101,6 +138,8 @@ namespace GHelper.UI
             int immersiveDarkMode = darkTheme && !contrastTheme ? 1 : 0;
             AcrylicBackdrop.SetWindowAttribute(Handle, UseImmersiveDarkMode, immersiveDarkMode);
             acrylicMode = acrylicBackdrop.Apply(Handle, acrylicRequested, AcrylicInsets);
+            // DWM's window fade briefly exposes the bright backdrop through the translucent client area.
+            AcrylicBackdrop.SetWindowAttribute(Handle, TransitionsForcedDisabled, acrylicBackdrop.IsLive ? 1 : 0);
             if (acrylicMode == AcrylicMode.FullWindow)
             {
                 acrylicSurface ??= new AcrylicSurface(this);

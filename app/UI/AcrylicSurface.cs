@@ -4,10 +4,23 @@ namespace GHelper.UI
 {
     internal sealed class AcrylicSurface : IDisposable
     {
+        private const uint InvalidateRegion = 0x0001;
+        private const uint IncludeChildren = 0x0080;
+        private const uint UpdateImmediately = 0x0100;
         private readonly Dictionary<Control, PaintWindow> windows = new();
         public bool HasLiveBackdrop { get; set; }
 
         public AcrylicSurface(Control root) => Attach(root);
+
+        public static void PaintWholeWindow(nint window)
+        {
+            RedrawWindow(window, 0, 0, InvalidateRegion | IncludeChildren | UpdateImmediately);
+            GdiFlush();
+        }
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool RedrawWindow(nint window, nint updateRectangle, nint updateRegion, uint flags);
 
         private void Attach(Control control)
         {
